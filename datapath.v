@@ -4,11 +4,13 @@
 `include "./memory/mem16.v"
 `include "./alu/alu.v"
 `include "./misc/npzLogic.v"
+`include "./misc/gate.v"
 
 module datapath(clk, reset,
                 aluop,
                 IR,
                 LDCC, LDIR, LDREG, LDPC, LDMAR, LDMDR, MEMEN,
+                GatePC, GateMDR, GateALU, GateMARMUX,
                 N, P, Z, R);
 
     input  clk;
@@ -16,6 +18,7 @@ module datapath(clk, reset,
     input  [2:0] aluop;
     input  LDCC, LDIR, LDREG;
     input  LDPC, LDMAR, LDMDR;
+    input  GatePC, GateMDR, GateALU, GateMARMUX;
     input  MEMEN;
     output N, P, Z;
     output R;
@@ -27,7 +30,8 @@ module datapath(clk, reset,
     wire [15:0] wireRegIn, wireRegOut1, wireRegOut2;
     wire [15:0] wirePCIn, wirePCOut;
     wire [15:0] wireMemAddr, wireMemOut;
-    wire [15:0] wireMDR, wireMAR;
+    wire [15:0] wireMDR, wireMAR, wireMARMUX;
+    wire [15:0] bus;
 
     register16 PC(.clk(clk),
                   .reset(reset),
@@ -42,13 +46,28 @@ module datapath(clk, reset,
                 .zero(zero),
                 .negative(negative));
 
-    latch16 MAR(.in(wirePCOut),
+    gate16 gatePC(wirePCOut,   // in
+                  bus,         // out
+                  GatePC);     // ctrl
+
+    latch16 MAR(.in(bus),
                 .out(wireMemAddr),
                 .write(LDMAR));
+
+    sext6 Sext6(.in(IR[5:0]),
+                .out(wireMARMUX));
+
+    gate16 gateMARMUX(.in(wireMARMUX),
+                      .out(bus),
+                      .enable(GateMARMUX));
 
     latch16 MDR(.in(outIR),
                 .out(wireMDR),
                 .write(LDMDR));
+
+    gate16 gateMDR(.in(outIR),
+                   .out(bus),
+                   .enable(GateMDR));
 
     latch16 instReg(.in(wireMDR),
                     .out(IR),
@@ -61,7 +80,7 @@ module datapath(clk, reset,
                  .clk(clk),
                  .reset(reset),
                  .in(wireRegOut1),
-                 .ir14(IR[14]),
+                 .ir14(1'b0),
                  .R(R));
 
     reg_file regFile(.clk(clk),
@@ -69,17 +88,21 @@ module datapath(clk, reset,
                      .write(LDREG),
                      .out1(wireRegOut1),
                      .out2(wireRegOut2),
-                     .in(wireRegIn),
-                     .readAddr1(IR[11:9]),
+                     .in(bus),
+                     .readAddr1(IR[8:6]),
                      .readAddr2(IR[2:0]),
                      .writeAddr(IR[11:9]));
 
-    alu ALU(.in1(aluIn1),
-            .in2(aluIn2),
+    alu ALU(.in1(wireRegOut1),
+            .in2(wireRegOut2),
             .op(aluop),
             .out(aluOut),
             .zero(zero),
             .negative(negative));
+
+    gate16 gateALU(.in(aluOut),
+                   .out(bus),
+                   .enable(GateALU));
 
     npzLogic NPZ(.in(aluOut),
                  .N(wireN), .P(wireP), .Z(wireZ));    

@@ -17,7 +17,11 @@ module memLow(clk, reset, write,
             for (i = 0; i < 256; i = i + 1)
                 mem[i] = 0;
             // specify initial commands here
-            mem[0] = 8'b00000001;
+            mem[0] = 8'b11010000;
+            mem[1] = 8'b11010010;
+            mem[2] = 8'b00000001;
+            mem[8] = 8'b00000001;
+            mem[9] = 8'b00000010;
         end
         else begin
             if (write == 1'b0) 

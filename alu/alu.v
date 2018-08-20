@@ -27,7 +27,7 @@ module alu(in1, in2, op, out, zero, negative);
                  out[12], out[13], out[14], out[15]);
     
     mux16x8 m1(outAdd, outAnd, outNot, outXor, outLshf, outRshf, 
-               16'b0, 16'b0, 
+               16'b0, in1, 
                op, out);
 
     adder16 add1(in1, in2, outAdd);

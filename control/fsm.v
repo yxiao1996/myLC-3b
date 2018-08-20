@@ -1,9 +1,10 @@
-module fsm(clk, reset, stateID,
+module fsm(clk, reset, stateID, IR,
            R);
 
     input            clk;
     input            reset;
     input            R;
+    input  [15:0]    IR;
     output reg [5:0] stateID;
 
     reg [5:0] nextState;
@@ -29,8 +30,18 @@ module fsm(clk, reset, stateID,
                     else
                         nextState = 33;
                 35: nextState = 32;
-                32: nextState = 1;
+                32: begin
+                    if (IR[15:12] == 4'b0001)
+                        nextState <= 1;
+                    else if (IR[15:12] == 4'b0110)
+                        nextState <= 6;
+                    else
+                        nextState <= 18;
+                end
                 1:  nextState = 18;
+                6:  nextState <= 25;
+                25: nextState <= 27;
+                27: nextState <= 18;
                 default:
                     nextState = 18;
             endcase
