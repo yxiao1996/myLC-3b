@@ -31,3 +31,12 @@ module sext6(in,out);
     assign out= {{10{in[5]}},in[5:0]};
 
 endmodule
+
+module sext5(in,out);
+
+    input [4:0] in;
+    output[15:0] out;
+
+    assign out= {{11{in[4]}},in[4:0]};
+
+endmodule

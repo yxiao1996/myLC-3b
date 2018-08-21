@@ -11,6 +11,7 @@ module datapath(clk, reset,
                 IR,
                 LDCC, LDIR, LDREG, LDPC, LDMAR, LDMDR, MEMEN,
                 GatePC, GateMDR, GateALU, GateMARMUX,
+                MuxALU, MuxAddr2, MuxAddr1, MuxPC,
                 N, P, Z, R);
 
     input  clk;
@@ -19,6 +20,8 @@ module datapath(clk, reset,
     input  LDCC, LDIR, LDREG;
     input  LDPC, LDMAR, LDMDR;
     input  GatePC, GateMDR, GateALU, GateMARMUX;
+    input  MuxALU, MuxAddr1; 
+    input  [1:0] MuxAddr2, MuxPC;
     input  MEMEN;
     output N, P, Z;
     output R;
@@ -28,9 +31,11 @@ module datapath(clk, reset,
     wire        wireN, wireP, wireZ;
     wire [15:0] outIR;
     wire [15:0] wireRegIn, wireRegOut1, wireRegOut2;
-    wire [15:0] wirePCIn, wirePCOut;
+    wire [15:0] wirePCIn, wirePCOut, wirePCAdderOut;
     wire [15:0] wireMemAddr, wireMemOut;
-    wire [15:0] wireMDR, wireMAR, wireMARMUX;
+    wire [15:0] wireMDR, wireMAR, wireMARMUX, wireALUMUX;
+    wire [15:0] wireIMM5SEXT, wireIMM6SEXT;
+    wire [15:0] wireAddr1, wireAddr2;
     wire [15:0] bus;
 
     register16 PC(.clk(clk),
@@ -42,9 +47,16 @@ module datapath(clk, reset,
     alu PCAdder(.in1(wirePCOut),
                 .in2(16'd2),
                 .op(3'b0),
-                .out(wirePCIn),
+                .out(wirePCAdderOut),
                 .zero(zero),
                 .negative(negative));
+
+    mux16x2 PCMux(.data0(wirePCAdderOut),
+                  .data1(bus),
+                  .data2(wireMARMUX),
+                  .data3(16'b0),
+                  .out(wirePCIn),
+                  .selectinput(MuxPC));
 
     gate16 gatePC(wirePCOut,   // in
                   bus,         // out
@@ -55,7 +67,29 @@ module datapath(clk, reset,
                 .write(LDMAR));
 
     sext6 Sext6(.in(IR[5:0]),
-                .out(wireMARMUX));
+                .out(wireIMM6SEXT));
+
+    sext5 Sext5(.in(IR[4:0]),
+                .out(wireIMM5SEXT));
+
+    mux16x2 Addr2Mux(.data0(16'b0),
+                     .data1(16'b0),
+                     .data2(wireIMM6SEXT),
+                     .data3(16'b0),
+                     .out(wireAddr2),
+                     .selectinput(MuxAddr2));
+
+    mux16x1 Addr1Mux(.data0(wirePCOut),
+                     .data1(wireRegOut1),
+                     .out(wireAddr1),
+                     .selectinput(MuxAddr1));
+
+    alu AddrAdder(.in1(wireAddr1),
+                  .in2(wireAddr2),
+                  .op(3'b000),
+                  .out(wireMARMUX),
+                  .zero(zero),
+                  .negative(negative));
 
     gate16 gateMARMUX(.in(wireMARMUX),
                       .out(bus),
@@ -94,17 +128,22 @@ module datapath(clk, reset,
                      .writeAddr(IR[11:9]));
 
     alu ALU(.in1(wireRegOut1),
-            .in2(wireRegOut2),
+            .in2(wireALUMUX),
             .op(aluop),
             .out(aluOut),
             .zero(zero),
             .negative(negative));
 
+    mux16x1 ALUMUX(.data0(wireRegOut2),
+                   .data1(wireIMM5SEXT),
+                   .out(wireALUMUX),
+                   .selectinput(MuxALU));
+
     gate16 gateALU(.in(aluOut),
                    .out(bus),
                    .enable(GateALU));
 
-    npzLogic NPZ(.in(aluOut),
+    npzLogic NPZ(.in(bus),
                  .N(wireN), .P(wireP), .Z(wireZ));    
 
     register1b regN(.clk(clk),

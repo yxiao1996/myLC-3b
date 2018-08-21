@@ -96,6 +96,20 @@ module controlStore(stateID,
             GateALU <= 1'b0;
             GateMARMUX <= 1'b1;
         end
+        5:begin // and
+            aluop <= 3'b001;
+            LDPC  <= 1'b1;
+            LDMAR <= 1'b1;
+            LDMDR <= 1'b1;
+            LDCC  <= 1'b0;
+            LDIR  <= 1'b1;
+            LDREG <= 1'b0;
+            MEMEN <= 1'b1;
+            GatePC <= 1'b1;
+            GateMDR <= 1'b1;
+            GateALU <= 1'b0;
+            GateMARMUX <= 1'b1;
+        end
         6:begin
             aluop <= 3'b111;
             LDPC  <= 1'b1;
@@ -135,6 +149,20 @@ module controlStore(stateID,
             MEMEN <= 1'b1;
             GatePC <= 1'b1;
             GateMDR <= 1'b0;
+            GateALU <= 1'b1;
+            GateMARMUX <= 1'b1;
+        end
+        12: begin
+            aluop <= 3'b111;
+            LDPC  <= 1'b0;
+            LDMAR <= 1'b1;
+            LDMDR <= 1'b1;
+            LDCC  <= 1'b1;
+            LDIR  <= 1'b1;
+            LDREG <= 1'b1;
+            MEMEN <= 1'b1;
+            GatePC <= 1'b1;
+            GateMDR <= 1'b1;
             GateALU <= 1'b1;
             GateMARMUX <= 1'b1;
         end

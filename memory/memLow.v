@@ -20,6 +20,8 @@ module memLow(clk, reset, write,
             mem[0] = 8'b11010000;
             mem[1] = 8'b11010010;
             mem[2] = 8'b00000001;
+            mem[3] = 8'b00100001;
+            mem[4] = 8'b11000000;
             mem[8] = 8'b00000001;
             mem[9] = 8'b00000010;
         end

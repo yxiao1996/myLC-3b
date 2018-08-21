@@ -8,6 +8,7 @@ module control(clk, reset,
                     LDCC, LDIR, LDREG,
                     LDPC, LDMAR, LDMDR,
                     GatePC, GateMDR, GateALU, GateMARMUX, 
+                    MuxALU, MuxAddr1, MuxAddr2, MuxPC, 
                     MEMEN);
 
     input clk;
@@ -18,6 +19,8 @@ module control(clk, reset,
     output LDCC, LDIR, LDREG;
     output LDPC, LDMAR, LDMDR;
     output GatePC, GateMDR, GateALU, GateMARMUX;
+    output MuxALU, MuxAddr1;
+    output [1:0] MuxAddr2, MuxPC;
     output MEMEN;
 
     wire [5:0] wireStateID;
@@ -26,7 +29,8 @@ module control(clk, reset,
             .reset(reset),
             .R(R),
             .IR(IR),
-            .stateID(wireStateID));
+            .stateID(wireStateID),
+            .MuxALU(MuxALU), .MuxAddr1(MuxAddr1), .MuxAddr2(MuxAddr2), .MuxPC(MuxPC));
 
     controlStore ControlStore(.stateID(wireStateID),
                               .aluop(aluop),
